@@ -399,9 +399,3 @@ we need an argument parsing => create parse_args and usage function
 we need some functions that do operation => gen_err_1, gen_err_2, gen_err_3, gen_err_4
 we need a function that print formatted duration from an input value in ns
 
-
-
-
-
-
-
