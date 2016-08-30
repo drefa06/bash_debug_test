@@ -3,15 +3,20 @@
 ## Purpose
 
 When you create a bash script, depending of the length and complexity of the script, 
-the debug/test/error management may be considered differently
+the debug/test/error management may be considered differently.
+
+The following examples shows differents cases from a basic script to a more complex one.
 
 ## Basic script
 
-see script.basic.sh
+see script_basic.sh
 
-Most of case you need to create a bash script that execute some operations, 
+Most of case you need to create a bash script that execute some operations. In this example, I only do some basic tests that contains script issues.
 
-For this case, the best solution for debug is to add set -x / set +x around the part to debug
+For this basic case, the sript is short so the best solution is to print out the lines during execution with xTrace.
+2 solutions:
+ - Add set -x / set +x in the script, around the part to debug. it print only the lines uncapsulated by set -x/+x.
+ - launch the script with bash -x <script_name>. It print all the lines executed of the script.
 
 Example 1 with script_basic.sh
 ```#!/bin/bash
@@ -95,17 +100,20 @@ gen_err_2: No Error, continue script
 
 ## Basic with functions and input argument
 
-When your script length increase more than 100 lines or is enhanced with some functions and/or input argument management, 
-it can be interresting to have a test scripts that is enhance according to modif under script.
+When your script size increase to more than 100 lines or is enhanced with some functions and/or input argument management, 
+it can be interresting to have a test scripts to be executed regularly and enhanced to follow modif under script.
 
-For debug I suggest to continue using set -x / set +x around part to test and to redirect output to file for analysis.
+For debug I suggest to continue using set -x / set +x as previously around part to test and to redirect output to file for analysis.
 
-### add functions
-Create a function but be carrefull on:
+### About functions
+Creating functions permit to recall same parts or simply split the script in blocks but be carrefull on:
 - How you call the function
-- Be carefull with local/global parameter
+- local/global parameter
 
-#### General case
+In the following we will treat this cases and also introduce the input argument parsing.
+
+#### General function
+let's create a function that accept 1 input parameter, use local and global parameter (and modify them), print a value and return an other value.
 ```
 func_name()
 {
@@ -116,7 +124,7 @@ func_name()
     PARAM3=$(($PARAM3+$param1))
 
     echo $param1
-    return $param1
+    return $(($param1*2))
 }
 
 param1=1
@@ -130,8 +138,9 @@ echo "PARAM3 = $PARAM3"
 echo "PARAM4 = $PARAM4"
 echo "PARAM5 = $PARAM5"
 
-func_name 3
-PARAM4=$?
+func_name 3 > func_name.log 2>&1  #executed directly but redirect result and errors under file that must be analysed later
+PARAM4=`cat func_name.log`
+PARAM5=$?
 echo "PARAM1 = $param1"
 echo "PARAM2 = $PARAM2"
 echo "PARAM3 = $PARAM3"
@@ -144,18 +153,19 @@ PARAM1 = 1 # Same as before calling, param1 in func is local
 PARAM2 = 2 # Not changed because func is called as sub-shell => all var in func are local
 PARAM3 =   # Empty because not init before calling and func is
 PARAM4 = 2 # is the echo result of func... be carrefull if more than 1 echo
-PARAM5 = 2 # is the return, 0 by default if no error, 1 by default if error, $param1 in our case
+PARAM5 = 4 # is the return, 0 by default if no error, 1 by default if error, $param1 * 2 in our case
 ### Test 2 ###
 2          # The echo $param1
 PARAM1 = 1 # Same as before calling, param1 in func is local
 PARAM2 = 3 # Changed because global and func called in shell as source
 PARAM3 = 5 # global var now modified
-PARAM4 = 2 # is the return $param1
-
+PARAM4 = 2 # is the $param1 printed in file func_name.log
+PARAM5 = 4 # is the returned $param1*2
 ```
 
 #### argument parsing
-I usually create 2 specific functions for argument parsing: parse_args and usage
+I usually create 2 specific functions for argument parsing: parse_args and usage.
+For my script, I always put 2 basic options: help and version
 
 ```
 usage()
@@ -164,13 +174,14 @@ usage()
     echo ""
     echo "[OPTION]"
     echo "    -h | --help:                Print this usage"
+    echo "    -v | --version:             Print script version"
     echo "    -l | --logfile <filename>:  Logfile to use"
     echo ""
 }
 
 parse_args()
 {
-    TEMP=`getopt -o hl: --long help,logfile: -- "$@"`
+    TEMP=`getopt -o hl:v --long help,logfile:,version -- "$@"`
 
     if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
 
@@ -180,6 +191,8 @@ parse_args()
         case "$1" in
             -h|--help)
                 usage; exit 0;  shift;;
+            -v|--version)
+                echo $VERSION; exit 0;  shift;;
             -l|--logfile)
                 LOGFILE=$2;     shift 2;;
             \? )
@@ -202,8 +215,9 @@ parse_args()
 }
 
 #Starts script with input argument analysis
-LOGFILE="script.log"          #default logfile name   => modified by -l|--log <log_file>
-declare -a ARGS_MANDATORY=( "" )  #init non-option argument
+VERSION="0.1"
+LOGFILE="script.log"              #default logfile name   => modified by -l|--log <log_file>
+declare -a ARGS_MANDATORY=( "" )  #init non-option arguments
 
 parse_args "$@"
 
@@ -219,6 +233,8 @@ So here are the cases to test for input args:
 ./script_evo_1.sh          => No arg so error
 ./script_evo_1.sh -h
 ./script_evo_1.sh --help   => print usage, exit with error code = 0 
+./script_evo_1.sh -v
+./script_evo_1.sh --version   => print version, exit with error code = 0 
 ./script_evo_1.sh -l <log_file> <ARG1>
 ./script_evo_1.sh --logfile <log_file> <ARG1> => init log file with new value, remove it if exist and starts script
 ./script_evo_1.sh -z       => echo "Invalid Option: -z", exit with error code = 1
@@ -233,6 +249,7 @@ You need also to create 1 function per sub-command.
 usage_general()
 {
     echo "usage: script.sh <sub_command> [sub_command OPTION] [<arg1> [<arg2> ... [<argN>]]]"
+    echo "version = $VERSION"
     echo ""
     echo "script.sh help <sub_command> to print help for each <sub_command>"
     echo ""
@@ -266,14 +283,17 @@ usage_status()
 parse_args_general()
 {
     case "$1" in
+        -h|--help) 
+                usage_general; exit 0;  shift;;
+        -v|--version) 
+                echo $VERSION; exit 0;  shift;;
         help)
-                echo $#
-                if [ "$2" == "execute" ]; then usage_execute
+                if [ $# -eq 1 ]; then usage_general; exit 0;
+                elif [ "$2" == "execute" ]; then usage_execute
                 elif [ "$2" == "status" ]; then usage_status
                 else echo "Invalid Sub Command: $2"
                 fi
-                shift;
-                usage_general; exit 0;
+                shift;;
         execute)
                 shift; parse_args_execute "$@";;
         status)
@@ -365,6 +385,14 @@ elif [ "${SUB_COMMAND}" == "execute" ]; then
 fi
 
 ```
+
+Naturally, in this case the number of solution to test is more important. That's why I strongly recommand you to create a test script very soon and enhance and execute it each time you change something in the script.
+
+see script_parse_args.sh and script_parse_args_test.sh
+the test file contains 20 tests.
+
+
+### Test and debug with functions
 
 Come back to script_evo_1.sh
 we need an argument parsing => create parse_args and usage function
