@@ -19,7 +19,8 @@ For this basic case, the sript is short so the best solution is to print out the
  - launch the script with bash -x <script_name>. It print all the lines executed of the script.
 
 Example 1 with script_basic.sh
-```#!/bin/bash
+```
+#!/bin/bash
 
 echo "Test1"
 set -x
@@ -46,7 +47,9 @@ set +x
 ```
 
 Execution: print only detailed lines of part encapsulated by set -x / set +x
-```$ bash ./script_basic.sh
+
+```
+> bash ./script_basic.sh
 ### Test1 ###
 + value1='bar baz'
 + value2=bar
@@ -69,7 +72,9 @@ gen_err_2: No Error, continue script
 
 example 2: remove the set -x / set +x and launch script like
 Execution type2: print all lines with detail
-```$ bash -x ./script_basic.sh
+
+```
+> bash -x ./script_basic.sh
 + set -e
 + echo '### Test1 ###'
 ### Test1 ###
@@ -114,6 +119,7 @@ In the following we will treat this cases and also introduce the input argument 
 
 #### General function
 let's create a function that accept 1 input parameter, use local and global parameter (and modify them), print a value and return an other value.
+
 ```
 func_name()
 {
@@ -146,8 +152,11 @@ echo "PARAM2 = $PARAM2"
 echo "PARAM3 = $PARAM3"
 echo "PARAM4 = $PARAM4"
 ```
+
 Execution:
-```$ bash script_func.sh
+
+```
+$ bash script_func.sh
 ### Test 1 ###
 PARAM1 = 1 # Same as before calling, param1 in func is local
 PARAM2 = 2 # Not changed because func is called as sub-shell => all var in func are local
