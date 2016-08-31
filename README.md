@@ -239,15 +239,15 @@ echo "    Mandatory args: ${ARGS_MANDATORY[@]}"
 ```
 
 So here are the cases to test for input args:
-./script_evo_1.sh          => No arg so error
-./script_evo_1.sh -h
-./script_evo_1.sh --help   => print usage, exit with error code = 0 
-./script_evo_1.sh -v
-./script_evo_1.sh --version   => print version, exit with error code = 0 
-./script_evo_1.sh -l <log_file> <ARG1>
-./script_evo_1.sh --logfile <log_file> <ARG1> => init log file with new value, remove it if exist and starts script
-./script_evo_1.sh -z       => echo "Invalid Option: -z", exit with error code = 1
-./script_evo_1.sh <ARG1> ... <ARGN>           => starts script with <ARG1> ... <ARGN>, default log file is used.
+- ./script_evo_1.sh          => No arg so error
+- ./script_evo_1.sh -h
+- ./script_evo_1.sh --help   => print usage, exit with error code = 0 
+- ./script_evo_1.sh -v
+- ./script_evo_1.sh --version   => print version, exit with error code = 0 
+- ./script_evo_1.sh -l <log_file> <ARG1>
+- ./script_evo_1.sh --logfile <log_file> <ARG1> => init log file with new value, remove it if exist and starts script
+- ./script_evo_1.sh -z       => echo "Invalid Option: -z", exit with error code = 1
+- ./script_evo_1.sh <ARG1> ... <ARGN>           => starts script with <ARG1> ... <ARGN>, default log file is used.
 
 
 For some specific case you can have 2 or more sub-command that need their own options.
@@ -395,16 +395,16 @@ fi
 
 ```
 
-Naturally, in this case the number of solution to test is more important. That's why I strongly recommand you to create a test script very soon and enhance and execute it each time you change something in the script.
+Naturally, in this case the number of solution to test is more important. That's why I strongly recommand you to create a test script very soon, enhance and execute it each time you change something in the script.
 
-see script_parse_args.sh and script_parse_args_test.sh
-the test file contains 20 tests.
+see `script_parse_args.sh` and `script_parse_args_test.sh` (test file with more than 20 tests)
 
 
 ### Test and debug with functions
 
-Come back to script_evo_1.sh
-we need an argument parsing => create parse_args and usage function
-we need some functions that do operation => gen_err_1, gen_err_2, gen_err_3, gen_err_4
-we need a function that print formatted duration from an input value in ns
+We will modify script_basic.sh in script_evo_1.sh with:
+- argument parsing => create parse_args and usage function
+- some functions that do operation => gen_err_1, gen_err_2, gen_err_3, gen_err_4
+- a function that print formatted duration from an input value in ns
+
 
