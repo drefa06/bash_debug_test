@@ -1,6 +1,7 @@
 my_func()
 {
     echo "START my_func"
+
     echo "my_func:input $1"
     echo "init local param1"
     local param1=2         #init local param1
@@ -14,8 +15,10 @@ my_func()
     PARAM3=$(($1+$param1)) #modif global PARAM3 with input param $1 + local param1
     echo "PARAM3=$PARAM3"
 
+set +x
     echo "END my_func"
     echo "my_func:return $(($param1*2))"
+
     return $(($param1*2))  #return content of param1*2
 }
 
@@ -26,8 +29,9 @@ echo "param1 = $param1"
 echo "PARAM2 = $PARAM2"
 
 echo ""
-echo "### Test 1 ### Exec 'my_func 3' as sub-shell"
+echo "### Case 1 ### Exec 'my_func 3' as sub-shell"
 echo "PARAM4 is set with all echo line"
+set -x
 PARAM4=`my_func 3` #called as sub-shell, do not change global var
 PARAM5=$?
 PARAM6=`echo "$PARAM4" | grep "param1=" | cut -d= -f2`
@@ -42,7 +46,7 @@ echo "PARAM5 = $PARAM5 => shall be returned code, default 0 for OK, 1 for NOK or
 echo "PARAM6 = $PARAM6 => set with post treatment on PARAM4"
 
 echo ""
-echo "### Test 2 ### Call my_func as script and put result in a result file"
+echo "### Case 2 ### Call my_func as script and put result in a result file"
 PARAM4=""
 my_func 3 > my_func.tmp 2>&1
 PARAM5=$?

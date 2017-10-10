@@ -68,12 +68,15 @@ gen_err_2: No Error, continue script
 
 ```
 You can see the 2 errors:
+
 ./script_basic_basic.sh: ligne 8 : [: trop d'arguments
+
 ./script_basic_basic.sh: ligne 20 : [: « ] » manquant
 
-Now remove the set -x / set +x and launch script with -x option
-Execution : ```$ bash -x script_basic.sh```
-Will print ALL lines execution details.
+
+You can also remove (or not) the set -x / set +x and launch script with -x option
+ ```$ bash -x script_basic.sh```
+But it will print ALL executed lines details.
 
 
 ## Functions and input argument
@@ -100,71 +103,34 @@ care that:
  - a global variable is modified by a function if simply called => see Test2 part in the following
  - return value is a facultative command, get it with foo=$?, default is 0 for OK and 1 for NOK
 
-script_func.sh
-```
-my_func()
+see script_func.sh
+
+Following are the main part of the script
+```bash
+my_func() #function declaration
 {
-    echo "START my_func"
-    echo "my_func:input $1"
-    echo "init local param1"
-    local param1=2         #init local param1
-    echo "param1=$param1"  #print out local param1
 
-    echo "init global PARAM2"
-    PARAM2=3               #modif global PARAM2 with local value
-    echo "PARAM2=$PARAM2"  #print out local PARAM2
+    echo "my_func:input $1" # echo input param 1
 
-    echo "init global PARAM3=1st input + param1"
-    PARAM3=$(($1+$param1)) #modif global PARAM3 with input param $1 + local param1
-    echo "PARAM3=$PARAM3"
+    local param1=2         #init local var param1
 
-    echo "END my_func"
-    echo "my_func:return $(($param1*2))"
-    return $(($param1*2))  #return content of param1*2
+    PARAM2=3               #init or modif global var PARAM2 with value
+
+    PARAM3=$(($1+$param1)) #init or modif global PARAM3 with input param $1 + local param1
+
+    return $(($param1*2))  #return code is content of param1*2
 }
 
-echo "Before my_func execution"
 param1=1
 PARAM2=2
-echo "param1 = $param1"
-echo "PARAM2 = $PARAM2"
 
-echo ""
-echo "### Test 1 ### Exec 'my_func 3' as sub-shell"
-echo "PARAM4 is set with all echo line"
-PARAM4=`my_func 3` #called as sub-shell, do not change global var
-PARAM5=$?
-PARAM6=`echo "$PARAM4" | grep "param1=" | cut -d= -f2`
-echo ""
-echo "After my_func execution"
-#called as sub-shell, do not change global var
-echo "param1 = $param1 => shall be same as before"
-echo "PARAM2 = $PARAM2 => shall be same as before"
-echo "PARAM3 = $PARAM3 => shall not be set"
-echo "PARAM4 = '$PARAM4' => shall be all echo from my_func"
-echo "PARAM5 = $PARAM5 => shall be returned code, default 0 for OK, 1 for NOK or specific return value, it's the case here"
-echo "PARAM6 = $PARAM6 => set with post treatment on PARAM4"
+echo "### Case 1 ### Exec 'my_func 3' as sub-shell"
+PARAM4=`my_func 3`   #called as sub-shell, do not change global var
+PARAM5=$?            #get return code
 
-echo ""
-echo "### Test 2 ### Call my_func as script and put result in a result file"
-PARAM4=""
+echo "### Case 2 ### Call my_func as script and put result in a result file"
 my_func 3 > my_func.tmp 2>&1
 PARAM5=$?
-PARAM6=`cat my_func.tmp | grep "param1=" | cut -d= -f2`
-
-echo "'my_func 3' result file"
-more my_func.tmp
-echo "After my_func execution"
-echo "param1 = $param1 => shall be same as before"
-echo "PARAM2 = $PARAM2 => shall be modified by my_func"
-echo "PARAM3 = $PARAM3 => shall be set by my_func"
-echo "PARAM4 = $PARAM4 => shall not be set"
-echo "PARAM5 = $PARAM5 => shall be returned code"
-echo "PARAM6 = $PARAM6 => set with post treatment on my_func.tmp"
-rm -f my_func.tmp
-
-echo ""
-echo "CONCLUSION: BE CAREFULL on local/Global param modif or not in function and how to call/execute the function"
 ```
 
 Execution:
@@ -175,7 +141,7 @@ Before my_func execution
 param1 = 1
 PARAM2 = 2
 
-### Test 1 ### Exec 'my_func 3' as sub-shell
+### Case 1 ### Exec 'my_func 3' as sub-shell
 PARAM4 is set with all echo line
 
 After my_func execution
@@ -195,7 +161,7 @@ my_func:return 4' => shall be all echo from my_func
 PARAM5 = 4 => shall be returned code, default 0 for OK, 1 for NOK or specific return value, it's the case here
 PARAM6 = 2 => set with post treatment on PARAM4
 
-### Test 2 ### Call my_func as script and put result in a result file
+### Case 2 ### Call my_func as script and put result in a result file
 'my_func 3' result file
 START my_func
 my_func:input 3
@@ -218,14 +184,34 @@ PARAM6 = 2 => set with post treatment on my_func.tmp
 CONCLUSION: BE CAREFULL on local/Global param modif or not in function and how to call/execute the function
 ```
 
+#### Test script with function
+
+modify script_func.sh
+
+If you launch the script with bash -x script_func.sh, it will print all details sequentially.
+You will not be able to identify where start or end the function.
+
+Now if you put set -x / set +x in script, where you put them can have an influence:
+
+- If you put a set -x in the function and no set +x.
+For Case 1, it will print lines details following set -x and stops at end of function, because it is a sub-shell
+For Case 2, it will print lines details following set -x and continue after end of function untill end of program
+
+- If you put a set -x before Case 1 function call and a set +x in function.
+It print lines details following set -x, call function as subshell with option -x set, so print lines detail of case1 until it see set +x, stop details and finish function. But outside, option -x is still set, so it continue to print details in main and reenter function in case 2. Function in case2 is called as part of the script itself, so when set +x is seen, it stops print details for all following including outside the function.
+
+As conclusion, when you use function, I suggest you to put set -x / set +x at same level (in the function or out the function, not mixing the set) and if needed, adding an echo wheb starting and ending function.
+
 #### General Argument parsing
 
 Argument parsing is very usefull for more explicit and structured script.
 
 I usually create 2 specific functions for argument parsing: parse_args and usage.
-For my script, I always put 2 basic options: help and version, and a logfile output option (with default value)
+For my script, I always put 2 basic options: help and version, and also a logfile output option (with default value=<script name>.log)
 
-```
+see script_parse_args_1.sh
+
+```bash
 usage()
 {
     echo "usage: script.sh [OPTION] <arg1> [<arg2> ... [<argN>]]"
@@ -287,167 +273,30 @@ echo "    Mandatory args: ${ARGS_MANDATORY[@]}"
 
 ```
 
-So here are the cases to test for input args:
-- ./script_evo_1.sh          => No arg so error
-- ./script_evo_1.sh -h
-- ./script_evo_1.sh --help   => print usage, exit with error code = 0 
-- ./script_evo_1.sh -v
-- ./script_evo_1.sh --version   => print version, exit with error code = 0 
-- ./script_evo_1.sh -l <log_file> <ARG1>
-- ./script_evo_1.sh --logfile <log_file> <ARG1> => init log file with new value, remove it if exist and starts script
-- ./script_evo_1.sh -z       => echo "Invalid Option: -z", exit with error code = 1
-- ./script_evo_1.sh <ARG1> ... <ARGN>           => starts script with <ARG1> ... <ARGN>, default log file is used.
+Ideally, we might test all cases, it means:
+- good option -h and --help
+- good option -v and --version
+- good option -h and -v mixed
+- bad option -x, alone and mixed with previous one
+- good option -l and --log without and with a filename
+- mandatory args with and without -l option
+
+You can do the tests by hand and play with set -x/set +x for debug but it might be much more interresting to create a test script!
+The test script can be to launch the script with all previous cases and check that everything is well executed.
+
+see and launch script_parse_args_test_1.sh for example
 
 #### Extended Argument parsing
 
 For some specific case you can have 2 or more sub-command that need their own options.
-In this case you can create a general parse_args and its usage that list sub-command, and a parse_args/usage per sub-command.
-You need also to create 1 function per sub-command.
+For example, git status and git commit are 2 sub-command of git function that need specific help and execution.
 
-```
-usage_general()
-{
-    echo "usage: script.sh <sub_command> [sub_command OPTION] [<arg1> [<arg2> ... [<argN>]]]"
-    echo "version = $VERSION"
-    echo ""
-    echo "script.sh help <sub_command> to print help for each <sub_command>"
-    echo ""
-    echo "<sub_command>"
-    echo "    help:      Print this usage"
-    echo "    help <sub_command>:      Print <sub_command> usage"
-    echo "    execute:   Execute script"
-    echo "    status:    give status"
-    echo ""
-}
-
-usage_execute()
-{
-    echo "usage: script.sh execute [OPTION] <arg1> [<arg2> ... [<argN>]]"
-    echo ""
-    echo "[OPTION]"
-    echo "    -h | --help:                Print this usage"
-    echo "    -l | --logfile <filename>:  Logfile to use"
-    echo ""
-}
-
-usage_status()
-{
-    echo "usage: script.sh status"
-    echo ""
-    echo "[OPTION]"
-    echo "    -h | --help:                Print this usage"
-    echo ""
-}
-
-parse_args_general()
-{
-    case "$1" in
-        -h|--help) 
-                usage_general; exit 0;  shift;;
-        -v|--version) 
-                echo $VERSION; exit 0;  shift;;
-        help)
-                if [ $# -eq 1 ]; then usage_general; exit 0;
-                elif [ "$2" == "execute" ]; then usage_execute
-                elif [ "$2" == "status" ]; then usage_status
-                else echo "Invalid Sub Command: $2"
-                fi
-                shift;;
-        execute)
-                shift; parse_args_execute "$@";;
-        status)
-                shift; parse_args_status "$@";;
-
-        \? )
-                echo "Invalid Option: -$OPTARG" 1>&2;;
-        --) shift ; break ;;
-        *) echo "Internal error!" ; exit 1 ;;
-    esac
-
-    shift $((OPTIND-1))
-}
-
-parse_args_execute()
-{
-    SUB_COMMAND="execute"
-    TEMP=`getopt -o hl: --long help,logfile: -- "$@"`
-
-    if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
-
-    eval set -- "$TEMP"
-
-    while true ; do
-        case "$1" in
-            -h|--help)
-                usage_execute; exit 0;  shift;;
-            -l|--logfile)
-                LOGFILE=$2;     shift 2;;
-            \? )
-                echo "Invalid Option: -$OPTARG" 1>&2;;
-            --) shift ; break ;;
-            *) echo "Internal error!" ; exit 1 ;;
-        esac
-    done
-
-    shift $((OPTIND-1))
-
-    #For at least 1 element in ARG_MANDATORY
-    if [ ${#@} -lt 1 ]; then
-        echo "At least one argument is needed"
-        usage;
-        exit 1
-    fi
-
-    ARGS_MANDATORY=( "$@" "${ARGS_MANDATORY[@]}" )
-}
-parse_args_status()
-{
-    SUB_COMMAND="status"
-    TEMP=`getopt -o h --long help -- "$@"`
-
-    if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
-
-    eval set -- "$TEMP"
-
-    while true ; do
-        case "$1" in
-            -h|--help)
-                usage_status; exit 0;  shift;;
-            \? )
-                echo "Invalid Option: -$OPTARG" 1>&2;;
-            --) shift ; break ;;
-            *) echo "Internal error!" ; exit 1 ;;
-        esac
-    done
-
-    shift $((OPTIND-1))
-}
-
-#Starts script with input argument analysis
-LOGFILE="script.log"          #default logfile name   => modified by -l|--log <log_file>
-declare -a ARGS_MANDATORY=( "" )  #init non-option argument
-SUB_COMMAND="general"
-
-parse_args_general "$@"
-
-if [ -f ${LOGFILE} ]; then rm -f ${LOGFILE}; fi #remove default log file if exist
-
-echo "Parsed input argument"
-echo "    Sub-command:    ${SUB_COMMAND}"
-echo "    Logfile:        ${LOGFILE}"
-echo "    Mandatory args: ${ARGS_MANDATORY[@]}"
-
-if [ "${SUB_COMMAND}" == "status" ]; then
-    get_status
-elif [ "${SUB_COMMAND}" == "execute" ]; then
-    execute_script
-fi
-
-```
+In this case you can create a general parse_args and usage, and a parse_args/usage per sub-command.
+You need also to create a function per sub-command.
 
 Naturally, in this case the number of solution to test is more important. That's why I strongly recommand you to create a test script very soon, enhance and execute it each time you change something in the script.
 
-see `script_parse_args.sh` and `script_parse_args_test.sh` (test file with more than 20 tests)
+see `script_parse_args_2.sh` and `script_parse_args_test_2.sh` (test file with more than 20 tests)
 
 
 ### Test and debug with functions
