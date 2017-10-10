@@ -18,7 +18,7 @@ For this basic case, the sript is short so the best solution is to print out the
  - launch the script with bash -x <script_name>. It print all the lines executed of the script.
 
 script_basic.sh
-```
+```bash
 #!/bin/bash
 
 echo "Test1"
@@ -67,15 +67,18 @@ bar baz!=bar
 gen_err_2: No Error, continue script
 
 ```
+You can see the 2 errors:
+./script_basic_basic.sh: ligne 8 : [: trop d'arguments
+./script_basic_basic.sh: ligne 20 : [: « ] » manquant
 
 Now remove the set -x / set +x and launch script with -x option
 Execution : ```$ bash -x script_basic.sh```
 Will print ALL lines execution details.
 
 
-## Basic with functions and input argument
+## Functions and input argument
 
-When your script size increase to more than 100 lines or is enhanced with some functions and/or input argument management, 
+When your script size increase to more than around 100 lines or is enhanced with some functions and/or input argument management, 
 it can be interresting to have a test scripts to be executed regularly and enhanced to follow modif under script.
 
 For debug I suggest to continue using set -x / set +x as previously around part to test and to redirect output to file for analysis.
@@ -87,8 +90,9 @@ Creating functions permit to recall same parts or simply split the script in blo
 
 In the following we will treat this cases and also introduce the input argument parsing.
 
-#### General function
-let's create a function that accept 1 input parameter, use local and global parameter (and modify them), print a value and return an other value.
+#### local and global variable in function
+
+Let's create a function that accept 1 input parameter, use local and global parameter (and modify them), print a value and return an other value.
 care that:
  - a local variable must be initialised with "local" keyword.
  - a local variable to function stays local even if you use the same name outside the function
@@ -214,7 +218,7 @@ PARAM6 = 2 => set with post treatment on my_func.tmp
 CONCLUSION: BE CAREFULL on local/Global param modif or not in function and how to call/execute the function
 ```
 
-## Argument parsing
+#### General Argument parsing
 
 Argument parsing is very usefull for more explicit and structured script.
 
@@ -294,6 +298,7 @@ So here are the cases to test for input args:
 - ./script_evo_1.sh -z       => echo "Invalid Option: -z", exit with error code = 1
 - ./script_evo_1.sh <ARG1> ... <ARGN>           => starts script with <ARG1> ... <ARGN>, default log file is used.
 
+#### Extended Argument parsing
 
 For some specific case you can have 2 or more sub-command that need their own options.
 In this case you can create a general parse_args and its usage that list sub-command, and a parse_args/usage per sub-command.
