@@ -273,7 +273,7 @@ echo "    Mandatory args: ${ARGS_MANDATORY[@]}"
 
 ```
 
-Ideally, we might test all cases, it means:
+Ideally, we might test all cases:
 - good option -h and --help
 - good option -v and --version
 - good option -h and -v mixed
@@ -281,10 +281,10 @@ Ideally, we might test all cases, it means:
 - good option -l and --log without and with a filename
 - mandatory args with and without -l option
 
-You can do the tests by hand and play with set -x/set +x for debug but it might be much more interresting to create a test script!
-The test script can be to launch the script with all previous cases and check that everything is well executed.
+You can do the tests by hand and play with set -x/set +x for debug but it might be quite interresting to create a test script.
+The test script can be the list of all call and check by hand that everything is well executed.
 
-see and launch script_parse_args_test_1.sh for example
+see and launch ```script_parse_args_test_1.sh``` for example
 
 #### Extended Argument parsing
 
@@ -296,7 +296,7 @@ You need also to create a function per sub-command.
 
 Naturally, in this case the number of solution to test is more important. That's why I strongly recommand you to create a test script very soon, enhance and execute it each time you change something in the script.
 
-see `script_parse_args_2.sh` and `script_parse_args_test_2.sh` (test file with more than 20 tests)
+see ```script_parse_args_2.sh``` and ```script_parse_args_test_2.sh``` (test file with more than 20 tests)
 
 
 ### Test and debug with functions
@@ -306,8 +306,8 @@ We will modify script_basic.sh in script_evo_1.sh with:
 - some functions that do operation with an error => gen_err_1, gen_err_2, gen_err_3, gen_err_4
 - a function that print formatted duration from an input value in ns
 
-The script will do:
-- enter 1 or more operation to execute
+We define that script will do:
+- enter 1 or more operation gen_err_<val> to execute
 - put this operation in a tmp file
 - execute each operation found in tmp file
 - at the end remove tmp file.
@@ -329,11 +329,9 @@ launch ./script_evo_1.sh -l script_evo_1_logfile.log gen_err_1
 Compare both file to check that content is the same
 
 It is common to use your own logfile instead of stdout or default logfile
-One classic usage is a script scrip_1.sh that call scrip_2.sh and you need to have all log in same file instead of 2 separated files
-in this case, let scrip_1.sh default log but call scrip_2.sh with option -l <script1 default logfile>
+One classic usage of this option is that your script call another script but you need to have all log in same file instead of 2 separated files (1 for each script).
 
-
-#### Error in function, how to detect it
+#### How Error can be ignored.
 
 let's try: ./script_evo_1.sh gen_err_1
 Do not ctr+c this time
@@ -350,11 +348,11 @@ EXECUTE: gen_err_1
 test gen_err_1: if [ bar baz == bar ] #too much arguments
 bar baz!=bar
 gen_err_1: No Error, continue script
-=>gen_err_1: return code 0
-=>gen_err_1: But error file content not empty !!!
-=>gen_err_1: Content is: 
+# => gen_err_1: return code 0
+# => gen_err_1: But error file content not empty !!!
+# => gen_err_1: Content is: 
 ./script_evo_1.sh: ligne 69 : [: trop d'arguments
-=>gen_err_1: Should have been detected as script syntax error and exit !!!
+# => gen_err_1: Should have been detected as script syntax error and exit !!!
 sleep 5 => if you want to test Ctrl+C ... just for fun, but let the script finish at least once
 
 duration = 00:00:00.022712
@@ -375,33 +373,35 @@ EXECUTE: gen_err_2
 test gen_err_2: if [ bar baz == bar] #missing space before ]
 bar baz!=bar
 gen_err_2: No Error, continue script
-=>gen_err_2: return code 0
-=>gen_err_2: But error file content not empty !!!
-=>gen_err_2: Content is: 
+# => gen_err_2: return code 0
+# => gen_err_2: But error file content not empty !!!
+# => gen_err_2: Content is: 
 ./script_evo_1.sh: ligne 86 : [: « ] » manquant
-=>gen_err_2: Should have been detected as script syntax error and exit !!!
+# => gen_err_2: Should have been detected as script syntax error and exit !!!
 ```
 Same problem
 
 idem for gen_err_3 and gen_err_4
 All of them should have generated a script issue and exit !
 
-Conclusion: If you have a long script that do something like that, the best case is that your script generate an other error elsewhere, the worst case is that you don't see anything wrong...
+Conclusion: If you have a long script that do something like that, the best case is that your script generate an other error elsewhere but the source error is hard to find, the worst case is that you don't see anything wrong, but your result might not what you expect.
 
-Solution 1:
-- Add a ```set -e``` at the beggining of your script
-- Have a look at the return code by launching: ```./script_evo_1.sh gen_err_1; echo $?```
+#### How to detect Script Error and Exit
+
+First, have a look at return code when launching: ```bash -e ./script_evo_1.sh gen_err_<val>; echo $?```
 
 Re-test your script:
-- ```./script_evo_1.sh gen_err_1; echo $?``` => same pb, return code=0
-- ```./script_evo_1.sh gen_err_2; echo $?``` => same pb, return code=0
-- ```./script_evo_1.sh gen_err_3; echo $?``` => exit with return code=2, OK
-- ```./script_evo_1.sh gen_err_4; echo $?``` => exit with return code=1, OK
+- with gen_err_1 => same pb, return code=0
+- with gen_err_2 => same pb, return code=0
+- with gen_err_3 => exit with return code=2, OK
+- with gen_err_4 => exit with return code=1, OK
 
-We still have wrong detection for gen_err_1 and gen_err_2 !
+So you need to add set -e at beginning of your script, it will enable the error detection
+
+But We still have wrong detection for gen_err_1 and gen_err_2 !
 You can have 2 ideas to solve this:
 - Any error shall stop the script (usefull for long time script) and return error code 1
-  In this case add a new function:
+  For this case add a new function:
 ```
 call()
 {
@@ -440,73 +440,96 @@ else
 fi
 ```
 
-#### ctrl+c during execution
+Modif are done in script_evo_2.sh.
+Remove *.log and *.tmp before each try.
+Try the 4 cases and note the last lines, return code and if script_evo_2.tmp exist
 
-if you launch ./script_evo_1.sh it suggest you to do ctrl+c 2 times.let's try it..
+- with gen_err_1
+  gen_err_1: No Error, continue script
+  ### ERROR ### ./script_evo_2.sh: ligne 70 : [: trop d'arguments
+  return code=1 => OK
+  script_evo_2.tmp still exist.
+- with gen_err_2
+  Non Critical error found during execution:
+  ./script_evo_2.sh: ligne 87 : [: « ] » manquant
+  return code=2 => OK
+  script_evo_2.tmp is removed.
+- with gen_err_3
+  Generate an error
+  return code=2 => OK
+  script_evo_2.tmp still exist.
+- with gen_err_4
+  No info given
+  return code=1 => OK
+  script_evo_2.tmp still exist.
 
-launch ```./script_evo_1.sh gen_err_2; echo $?``` and do the ctrl+c when asked the 1st time,
-do nothing and re-launch immediately the script and do the ctrl+c when asked the 2nd time.
+All script error are detected.
+But script_evo_2.tmp is not removed. This can be a real problem.
 
-and finally re launch a third time the script and let it go through the end.
-The 3rd execution will print:
+
+#### Trapping system
+
+At script creation, we decide to put the functions to execute in a file script_evo_2.tmp and execute it.
+Some error well detected will exit the script before removing script_evo_2.tmp.
+
+try the following:
+```./script_evo_2.sh gen_err_1```
+follwed without removing script_evo_2.tmp by:
+```./script_evo_2.sh gen_err_3```
+
+What happen?
+- First launch, it execute gen_err_1, detect it, exit and script_evo_2.tmp still exist
+- Second launch, it execute gen_err_1 again.... and not gen_err_3.
+
+There is 3 solutions to this problem:
+- remove manually script_evo_2.tmp before each run.
+  And if you forget it only once, just the day you need a good treatment, and script run for 30 minutes... with the wrong param !
+- remove it automatically at beginning of each run.
+  Works fine and is enough for many cases
+- remove it automatically at the end either an error happen.
+  This solution is done by a trapping of exit status. I like it.
+
+To prevent this, add the function to your script:
+```bash
+function PostProcess()
+{
+    echo "### EXIT ### Cleaning Process before exit"
+    #Add here all what you need to be done after exiting the script, removing file, cleaning dB, env var, etc...
+    rm -f *.tmp *.err
+    echo "### EXIT ### DONE BYE"
+}
 ```
-./script_evo_1.sh gen_err_2; echo "return code: $?"
-Analyse input argument
-    Logfile:        script_evo_1.log
-    Mandatory args: gen_err_2 
-LOGFILE=script_evo_1.log
-MANDATORY=gen_err_2 
-duration = 00:00:11.011905
-SLEEP 5 => if you want to test Ctrl+C ... please do it at least one
 
-EXECUTE: gen_err_2
-test gen_err_2: if [ bar baz == bar] #missing space before ]
-bar baz!=bar
-gen_err_2: No Error, continue script
-sleep 5 => if you want to test Ctrl+C ... just for fun, but let the script finish at least once
-
-EXECUTE: gen_err_2
-test gen_err_2: if [ bar baz == bar] #missing space before ]
-bar baz!=bar
-gen_err_2: No Error, continue script
-sleep 5 => if you want to test Ctrl+C ... just for fun, but let the script finish at least once
-
-EXECUTE: gen_err_2
-test gen_err_2: if [ bar baz == bar] #missing space before ]
-bar baz!=bar
-gen_err_2: No Error, continue script
-sleep 5 => if you want to test Ctrl+C ... just for fun, but let the script finish at least once
-
-duration = 04:10:27.027320
-End Execution, SLEEP 5sec more before ending
-Content of script_evo_1.tmp:
-INPUT_ARG=gen_err_2
-LOGFILE=script_evo_1.log
-MANDATORY=gen_err_2 
-INPUT_ARG=gen_err_2
-LOGFILE=script_evo_1.log
-MANDATORY=gen_err_2 
-INPUT_ARG=gen_err_2
-LOGFILE=script_evo_1.log
-MANDATORY=gen_err_2 
-duration = 04:10:27.027320
-Remove script_evo_1.tmp
-Non Critical error found during execution:
-./script_evo_1.sh: ligne 87 : [: « ] » manquant
-./script_evo_1.sh: ligne 87 : [: « ] » manquant
-./script_evo_1.sh: ligne 87 : [: « ] » manquant
-return code: 2
+and at the beginning of script
+```bash
+trap 'PostProcess $?' EXIT #trap exit
 ```
 
-You see it.... it execute 3 time gen_err_2 !!
-You know it's because we did not remove script_evo_1.tmp after each run.
-But sometimes, you can forgot a ressource to remove or reinit before each run, so how to prevent this ?
+The script will exit... with or without an error, i will exit, then it will call PostProcess function.
 
-trapping EXIT ... because whatever happen, the script exit and so we can trap it to execute "PostProcess" commands.
-trapping SIGINT SIGTERM SIGKILL to trap any external kill -9, kill -15 or internal ctrl+c
+see script_evo_3.sh
 
-so I suggest to create following functions
+- Try ```./script_evo_3.sh gen_err_1```
+  Note the last line:
+  ### EXIT ### Cleaning Process before exit
+  ### EXIT ### DONE BYE
+  no more script_evo_3.tmp and script_evo_3.err are ell deleted
+- Try ```./script_evo_3.sh gen_err_2```
+  gen_err_2 is well executed !
+
+This trapping system can also be used to detect any other signal where you like to do a specific treatment. For ex, detect CTRL+C.
+Before this, CTRL+C = SIGKILL call the classic Exit process. At this steps, it call PostProcess function before exit.
+Now, you want to create a specific treatment that return an error code depending on event.
+You add the trapping line at beginning of script:
+```bash
+trap 'AbortProcess $? ${BASH_SOURCE}:${LINENO} ${FUNCNAME[0]:+${FUNCNAME[0]}}' SIGINT SIGTERM SIGKILL
 ```
+SIGKILL = CTRL+C = kill -9
+SIGTERM = kill -15
+SIGINT = internal interuption
+
+And add the new function AbortProcess:
+```bash
 function AbortProcess()
 {
     rc=$1
@@ -515,18 +538,25 @@ function AbortProcess()
     echo "### ABORT ### exit $rc"
     exit $rc
 }
-
-function PostProcess()
-{
-    echo "### EXIT ### Cleaning Process before exit"
-    #Add here what you need to be sure after exiting the script
-    rm -f *.tmp *.err
-    echo "### EXIT ### DONE BYE"
-}
 ```
-and add the line at the beginning of the script:
-trap 'AbortProcess $? ${BASH_SOURCE}:${LINENO} ${FUNCNAME[0]:+${FUNCNAME[0]}}' SIGINT SIGTERM SIGKILL #trap any ctrl+c
-trap 'PostProcess $?' EXIT #trap exit
+At CTRL+C, it will call AbortProcess, then at end, it do an Exit... that call  PostProcess...
+
+see script_evo_4.sh
+
+Try: ```./script_evo_4.sh gen_err_1; echo $?```
+Type CTRL+C when asked, what happen?
+```
+SLEEP 5 => if you want to test Ctrl+C ... please do it at least one
+^C### ABORT ### Process aborted
+### ABORT ### During: ./script_evo_4.sh:1 main
+### ABORT ### exit 130
+### EXIT ### Cleaning Process before exit
+### EXIT ### DONE BYE
+130
+```
+
+You can see the ABORT and EXIT treatment well executed.
+
 
 #### test file
 
