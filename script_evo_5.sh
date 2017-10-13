@@ -191,87 +191,102 @@ function PostProcess()
 }
 
 ###################################################################################
+script()
+{
+    #starts to proceed script
+    echo "SLEEP 5 => if you want to test Ctrl+C ... please do it at least one" | tee -a ${LOGFILE}
+    sleep 5
+
+    start_time=$(date +%s%N)
+
+    echo ""
+    #Call and execute functions in ARGS_MANDATORY
+    # =>1/ either by direct call of ${ARGS_MANDATORY[@]}
+    #      for err_type in `echo ${ARGS_MANDATORY[@]}`; do
+    # =>2/ nor by getting them from our tmp file... our solution
+    for err_type in `cat ${TMP_FILE} | grep "MANDATORY=" | awk -F= '{ print $2 }'`; do
+        ARGS_MANDATORY=( ${ARGS_MANDATORY[@]/${err_type}/} )
+        echo "EXECUTE: ${err_type}" | tee -a ${LOGFILE}
+
+        if [ "${err_type}" == "gen_err_1" ]; then 
+            call ${err_type} #exit 1 if any error found 
+        else
+            eval ${err_type} 2>> $ERRFILE #continue script until the end
+        fi
+
+        echo "sleep 5 => if you want to test Ctrl+C ... just for fun, but let the script finish at least once" | tee -a ${LOGFILE}
+        sleep 5
+    
+        echo ""
+    done
+    duration=$(($(date +%s%N)-${start_time}))
+    echo_duration $duration | tee -a ${TMP_FILE}
+
+    echo "End Execution, SLEEP 5sec more before ending"
+    sleep 5
+
+    #print then remove tmp file before exit
+    echo "Content of ${TMP_FILE}:"
+    cat ${TMP_FILE}
+    echo "Remove ${TMP_FILE}" | tee -a ${LOGFILE}
+    rm -f ${TMP_FILE}
+
+    #exit 2 for any error that do not stop script
+    if [ `cat $ERRFILE | wc -l` -ne 0 ]; then
+        echo "Non Critical error found during execution:"
+        cat $ERRFILE
+        exit 2
+    else
+        echo "WELL DONE, BYE" | tee -a ${LOGFILE}
+    fi
+}
+
+###################################################################################
+main()
+{
+    VERSION="0.1"
+
+    ME=$(basename -- "$0")
+
+    TMP_FILE="${ME%.*}.tmp"
+    start_time=$(date +%s%N)
+    echo "INPUT_ARG=$@" >> ${TMP_FILE}
+
+    #Starts script with input argument analysis
+    LOGFILE="${ME%.*}.log"  #default logfile name   => modified by -l|--log <log_file>
+    ERRFILE="${ME%.*}.err"
+    if [ -f ${ERRFILE} ]; then rm -f ${ERRFILE}; fi
+
+    declare -a ARGS_MANDATORY=( "" )  #init non-option argument
+
+    ##############################################################################
+    #Parse input argument
+    parse_args "$@"
+    ##############################################################################
+
+    echo "parse_args Done" > ${LOGFILE}
+
+    #Put some element in tmp file
+    echo "LOGFILE=${LOGFILE}" | tee -a ${TMP_FILE} | tee -a ${LOGFILE}
+    echo "MANDATORY=${ARGS_MANDATORY[@]}" | tee -a ${TMP_FILE} | tee -a ${LOGFILE}
+    duration=$(($(date +%s%N)-${start_time}))
+    echo_duration $duration
+
+    script
+}
+
+###################################################################################
 ###################################################################################
 ### 
 ###                                 MAIN
 ### 
 ###################################################################################
 #create a tmp file.
-trap 'PostProcess $?' EXIT #trap exit
-trap 'AbortProcess $? ${BASH_SOURCE}:${LINENO} ${FUNCNAME[0]:+${FUNCNAME[0]}}' SIGINT SIGTERM SIGKILL
 
-VERSION="0.1"
+if [ "`echo $@ | grep '\-\-source'`" == "" ]; then # For usual execution
+    trap 'PostProcess $?' EXIT #trap exit
+    trap 'AbortProcess $? ${BASH_SOURCE}:${LINENO} ${FUNCNAME[0]:+${FUNCNAME[0]}}' SIGINT SIGTERM SIGKILL
 
-ME=$(basename -- "$0")
-
-TMP_FILE="${ME%.*}.tmp"
-start_time=$(date +%s%N)
-echo "INPUT_ARG=$@" >> ${TMP_FILE}
-
-#Starts script with input argument analysis
-LOGFILE="${ME%.*}.log"  #default logfile name   => modified by -l|--log <log_file>
-ERRFILE="${ME%.*}.err"
-if [ -f ${ERRFILE} ]; then rm -f ${ERRFILE}; fi
-
-declare -a ARGS_MANDATORY=( "" )  #init non-option argument
-
-##############################################################################
-#Parse input argument
-parse_args "$@"
-##############################################################################
-
-echo "parse_args Done" > ${LOGFILE}
-
-#Put some element in tmp file
-echo "LOGFILE=${LOGFILE}" | tee -a ${TMP_FILE} | tee -a ${LOGFILE}
-echo "MANDATORY=${ARGS_MANDATORY[@]}" | tee -a ${TMP_FILE} | tee -a ${LOGFILE}
-duration=$(($(date +%s%N)-${start_time}))
-echo_duration $duration
-
-#starts to proceed script
-echo "SLEEP 5 => if you want to test Ctrl+C ... please do it at least one" | tee -a ${LOGFILE}
-sleep 5
-
-start_time=$(date +%s%N)
-
-echo ""
-#Call and execute functions in ARGS_MANDATORY
-# =>1/ either by direct call of ${ARGS_MANDATORY[@]}
-#      for err_type in `echo ${ARGS_MANDATORY[@]}`; do
-# =>2/ nor by getting them from our tmp file... our solution
-for err_type in `cat ${TMP_FILE} | grep "MANDATORY=" | awk -F= '{ print $2 }'`; do
-    ARGS_MANDATORY=( ${ARGS_MANDATORY[@]/${err_type}/} )
-    echo "EXECUTE: ${err_type}" | tee -a ${LOGFILE}
-
-    if [ "${err_type}" == "gen_err_1" ]; then 
-        call ${err_type} #exit 1 if any error found 
-    else
-        eval ${err_type} 2>> $ERRFILE #continue script until the end
-    fi
-
-    echo "sleep 5 => if you want to test Ctrl+C ... just for fun, but let the script finish at least once" | tee -a ${LOGFILE}
-    sleep 5
-
-    echo ""
-done
-duration=$(($(date +%s%N)-${start_time}))
-echo_duration $duration | tee -a ${TMP_FILE}
-
-echo "End Execution, SLEEP 5sec more before ending"
-sleep 5
-
-#print then remove tmp file before exit
-echo "Content of ${TMP_FILE}:"
-cat ${TMP_FILE}
-echo "Remove ${TMP_FILE}" | tee -a ${LOGFILE}
-rm -f ${TMP_FILE}
-
-#exit 2 for any error that do not stop script
-if [ `cat $ERRFILE | wc -l` -ne 0 ]; then
-    echo "Non Critical error found during execution:"
-    cat $ERRFILE
-    exit 2
-else
-    echo "WELL DONE, BYE" | tee -a ${LOGFILE}
+    main "${@}"
 fi
 

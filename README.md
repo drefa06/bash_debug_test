@@ -67,15 +67,15 @@ bar baz!=bar
 gen_err_2: No Error, continue script
 
 ```
-You can see the 2 errors:
-
+You can see the errors:
+```
 ./script_basic_basic.sh: ligne 8 : [: trop d'arguments
-
 ./script_basic_basic.sh: ligne 20 : [: « ] » manquant
-
+```
 
 You can also remove (or not) the set -x / set +x and launch script with -x option
- ```$ bash -x script_basic.sh```
+```$ bash -x script_basic.sh```
+
 But it will print ALL executed lines details.
 
 
@@ -186,9 +186,8 @@ CONCLUSION: BE CAREFULL on local/Global param modif or not in function and how t
 
 #### Test script with function
 
-modify script_func.sh
-
 If you launch the script with bash -x script_func.sh, it will print all details sequentially.
+
 You will not be able to identify where start or end the function.
 
 Now if you put set -x / set +x in script, where you put them can have an influence:
@@ -202,11 +201,14 @@ It print lines details following set -x, call function as subshell with option -
 
 As conclusion, when you use function, I suggest you to put set -x / set +x at same level (in the function or out the function, not mixing the set) and if needed, adding an echo wheb starting and ending function.
 
+### Input argument parsing
+
 #### General Argument parsing
 
 Argument parsing is very usefull for more explicit and structured script.
 
 I usually create 2 specific functions for argument parsing: parse_args and usage.
+
 For my script, I always put 2 basic options: help and version, and also a logfile output option (with default value=<script name>.log)
 
 see script_parse_args_1.sh
@@ -270,7 +272,6 @@ if [ -f ${LOGFILE} ]; then rm -f ${LOGFILE}; fi #remove default log file if exis
 echo "Parsed input argument"
 echo "    Logfile:        ${LOGFILE}"
 echo "    Mandatory args: ${ARGS_MANDATORY[@]}"
-
 ```
 
 Ideally, we might test all cases:
@@ -282,6 +283,7 @@ Ideally, we might test all cases:
 - mandatory args with and without -l option
 
 You can do the tests by hand and play with set -x/set +x for debug but it might be quite interresting to create a test script.
+
 The test script can be the list of all call and check by hand that everything is well executed.
 
 see and launch ```script_parse_args_test_1.sh``` for example
@@ -289,6 +291,7 @@ see and launch ```script_parse_args_test_1.sh``` for example
 #### Extended Argument parsing
 
 For some specific case you can have 2 or more sub-command that need their own options.
+
 For example, git status and git commit are 2 sub-command of git function that need specific help and execution.
 
 In this case you can create a general parse_args and usage, and a parse_args/usage per sub-command.
@@ -297,7 +300,6 @@ You need also to create a function per sub-command.
 Naturally, in this case the number of solution to test is more important. That's why I strongly recommand you to create a test script very soon, enhance and execute it each time you change something in the script.
 
 see ```script_parse_args_2.sh``` and ```script_parse_args_test_2.sh``` (test file with more than 20 tests)
-
 
 ### Test and debug with functions
 
@@ -321,20 +323,27 @@ The goal is:
 #### logfile
 
 Add a new option (-l|--logfile <filename>) to parse_args and update usage
-launch ./script_evo_1.sh gen_err_1
+
+launch ```./script_evo_1.sh gen_err_1```
+
 => will log in default file ./script_evo_1.log
-launch ./script_evo_1.sh -l script_evo_1_logfile.log gen_err_1
+
+launch ```./script_evo_1.sh -l script_evo_1_logfile.log gen_err_1```
+
 => will log in file ./script_evo_1_logfile.log
 
-Compare both file to check that content is the same
+Compare both files to check that content is the same
 
 It is common to use your own logfile instead of stdout or default logfile
+
 One classic usage of this option is that your script call another script but you need to have all log in same file instead of 2 separated files (1 for each script).
 
-#### How Error can be ignored.
+#### My Error are ignored !
 
-let's try: ./script_evo_1.sh gen_err_1
-Do not ctr+c this time
+let's try: ```./script_evo_1.sh gen_err_1```
+
+Do not ctr+c this time. 
+
 ```
 Analyse input argument
     Logfile:        script_evo_1.log
@@ -365,7 +374,7 @@ duration = 00:00:00.022712
 Remove script_evo_1.tmp
 BYE
 ```
-As you can see, the script goes through the end unless an error happen !!!
+**As you can see, the script goes through the end unless an error happen !!!**
 
 Try it with gen_err_2:
 ```
@@ -379,14 +388,15 @@ gen_err_2: No Error, continue script
 ./script_evo_1.sh: ligne 86 : [: « ] » manquant
 # => gen_err_2: Should have been detected as script syntax error and exit !!!
 ```
-Same problem
+**Same problem**
 
 idem for gen_err_3 and gen_err_4
+
 All of them should have generated a script issue and exit !
 
-Conclusion: If you have a long script that do something like that, the best case is that your script generate an other error elsewhere but the source error is hard to find, the worst case is that you don't see anything wrong, but your result might not what you expect.
+**Conclusion:** If you have a long script that do something like that, the best case is that your script generate an other error elsewhere but the source error is hard to find, the worst case is that you don't see anything wrong, but your result might not what you expect.
 
-#### How to detect Script Error and Exit
+#### So, how to detect Script Error and Exit?
 
 First, have a look at return code when launching: ```bash -e ./script_evo_1.sh gen_err_<val>; echo $?```
 
@@ -396,12 +406,13 @@ Re-test your script:
 - with gen_err_3 => exit with return code=2, OK
 - with gen_err_4 => exit with return code=1, OK
 
-So you need to add set -e at beginning of your script, it will enable the error detection
+First of all, add ```set -e``` at beginning of your script to enable the error detection.
 
 But We still have wrong detection for gen_err_1 and gen_err_2 !
-You can have 2 ideas to solve this:
-- Any error shall stop the script (usefull for long time script) and return error code 1
-  For this case add a new function:
+
+The idea to solve this is that any error shall stop the script (usefull for long time script) and return error code 1
+  
+To do that, I suggest to add a new function, that call and control the target function:
 ```
 call()
 {
@@ -423,12 +434,13 @@ call()
 ```
 call <func_to_exec> "<func_arg_1> ... <func_arg_n>" 
 ```
-- The script can continue but we must list them and exit with a non zero code (ex: 2)
-  In this case, call the func like:
+
+The script can continue but we must list them and exit with a non zero code
+In this case, call the func like:
 ```
 eval <func_to_exec> "<func_arg_1> ... <func_arg_n>" 2>> $ERRFILE
 ```
-   And add following treatment at the end of script:
+And add following treatment at the end of script:
 ```
 if [ `cat $ERRFILE | wc -l` -ne 0 ]; then
     echo "### Non Critical error found during execution ###"
@@ -441,40 +453,65 @@ fi
 ```
 
 Modif are done in script_evo_2.sh.
-Remove *.log and *.tmp before each try.
+
+**Remove *.log and *.tmp before each try.**
+
 Try the 4 cases and note the last lines, return code and if script_evo_2.tmp exist
 
 - with gen_err_1
+
   gen_err_1: No Error, continue script
-  ### ERROR ### ./script_evo_2.sh: ligne 70 : [: trop d'arguments
+
+  \#\#\# ERROR \#\#\# ./script_evo_2.sh: ligne 70 : [: trop d'arguments
+
   return code=1 => OK
-  script_evo_2.tmp still exist.
-- with gen_err_2
-  Non Critical error found during execution:
-  ./script_evo_2.sh: ligne 87 : [: « ] » manquant
-  return code=2 => OK
-  script_evo_2.tmp is removed.
-- with gen_err_3
-  Generate an error
-  return code=2 => OK
-  script_evo_2.tmp still exist.
-- with gen_err_4
-  No info given
-  return code=1 => OK
+
   script_evo_2.tmp still exist.
 
+- with gen_err_2
+
+  Non Critical error found during execution:
+
+  ./script_evo_2.sh: ligne 87 : [: « ] » manquant
+
+  return code=2 => OK
+
+  script_evo_2.tmp is removed.
+
+- with gen_err_3
+
+  Generate an error
+
+  return code=2 => OK
+
+  script_evo_2.tmp still exist.
+
+- with gen_err_4
+
+  No info given
+
+  return code=1 => OK
+
+  script_evo_2.tmp still exist.
+
+
 All script error are detected.
-But script_evo_2.tmp is not removed. This can be a real problem.
+
+But script_evo_2.tmp is not removed. 
 
 
 #### Trapping system
 
 At script creation, we decide to put the functions to execute in a file script_evo_2.tmp and execute it.
+
 Some error well detected will exit the script before removing script_evo_2.tmp.
 
 try the following:
+
 ```./script_evo_2.sh gen_err_1```
+
 follwed without removing script_evo_2.tmp by:
+
 ```./script_evo_2.sh gen_err_3```
 
 What happen?
@@ -483,10 +520,13 @@ What happen?
 
 There is 3 solutions to this problem:
 - remove manually script_evo_2.tmp before each run.
+
   And if you forget it only once, just the day you need a good treatment, and script run for 30 minutes... with the wrong param !
 - remove it automatically at beginning of each run.
+
   Works fine and is enough for many cases
 - remove it automatically at the end either an error happen.
+
   This solution is done by a trapping of exit status. I like it.
 
 To prevent this, add the function to your script:
@@ -505,28 +545,31 @@ and at the beginning of script
 trap 'PostProcess $?' EXIT #trap exit
 ```
 
-The script will exit... with or without an error, i will exit, then it will call PostProcess function.
+Whatever happen, the script will exit with or without an error. Anyway, it will call PostProcess function.
 
 see script_evo_3.sh
 
 - Try ```./script_evo_3.sh gen_err_1```
+
   Note the last line:
-  ### EXIT ### Cleaning Process before exit
+```  ### EXIT ### Cleaning Process before exit
   ### EXIT ### DONE BYE
   no more script_evo_3.tmp and script_evo_3.err are ell deleted
+```
 - Try ```./script_evo_3.sh gen_err_2```
+
   gen_err_2 is well executed !
 
-This trapping system can also be used to detect any other signal where you like to do a specific treatment. For ex, detect CTRL+C.
-Before this, CTRL+C = SIGKILL call the classic Exit process. At this steps, it call PostProcess function before exit.
-Now, you want to create a specific treatment that return an error code depending on event.
-You add the trapping line at beginning of script:
+This trapping system can also be used to detect any other signal (list available by tipping ```kill -l```
+
+We decide to trap SIGINT (CTRL+C), SIGTERM (kill -15) and SIGKILL (kill -9).
+
+When signal happen, it will call the associated function (AbortProcess) before exit (also trapped and call PostProcess).
+
+Add the trapping line at beginning of script:
 ```bash
 trap 'AbortProcess $? ${BASH_SOURCE}:${LINENO} ${FUNCNAME[0]:+${FUNCNAME[0]}}' SIGINT SIGTERM SIGKILL
 ```
-SIGKILL = CTRL+C = kill -9
-SIGTERM = kill -15
-SIGINT = internal interuption
 
 And add the new function AbortProcess:
 ```bash
@@ -539,11 +582,11 @@ function AbortProcess()
     exit $rc
 }
 ```
-At CTRL+C, it will call AbortProcess, then at end, it do an Exit... that call  PostProcess...
 
 see script_evo_4.sh
 
 Try: ```./script_evo_4.sh gen_err_1; echo $?```
+
 Type CTRL+C when asked, what happen?
 ```
 SLEEP 5 => if you want to test Ctrl+C ... please do it at least one
@@ -558,34 +601,195 @@ SLEEP 5 => if you want to test Ctrl+C ... please do it at least one
 You can see the ABORT and EXIT treatment well executed.
 
 
-#### test file
+## Test and debug complex script?
 
-You can create a test file like explained before, but it is now interresting to test functions and action that trap script before full script.
+Your script is long and contains many functions. Test is more and more important and rerun the full script for all cases by hand is not your favorite part of the work.
+
+The first thing to remember is: **Test developpmenent can be as long as code developpment**
+
+Unfortunatelly, this is very rarelly done in company. 
+
+### Simple test script 
+
+The first idea is to create a test script that call your script to test with all possibilities and check that return code and other details are well performed.
+
+
+For an idea of this kind of script, see script_evo_4_test.sh
+
+Test1:
+```bash
+#!/bin/bash
+
+SCRIPT_ERR="script_evo_4_test.err"
+
+echo "#########################################################################"
+echo "### TEST 1: ./script_evo_4.sh"
+./script_evo_4.sh > $SCRIPT_ERR 2>&1
+rc=$?
+
+result="NOK"
+if [ $rc -eq 1 ]; then result="OK"; fi
+echo "  return code: $rc => $result"
+
+result="NOK"
+if [ ! -z "`cat $SCRIPT_ERR | grep 'At least one argument is needed'`" ]; then result="OK"; fi
+echo "  reason: At least one argument is needed => $result "
+
+result="NOK"
+if [ ! -z "`cat $SCRIPT_ERR | grep 'usage:'`" ]; then result="OK"; fi
+echo "  usage print => $result "
+
+result="NOK"
+if [ ! -z "`cat $SCRIPT_ERR | grep '### EXIT ### DONE BYE'`" ]; then result="OK"; fi
+echo "  PostProcess => $result "
+
+echo ""
+```
+test12 that send CTRL+C vi a background script:
+```bash
+echo "#########################################################################"
+echo "### TEST 12: ./script_evo_4.sh  gen_good_1 gen_err_1"
+echo "###          CTRL+C during process"
+./generate_ctrl_c.sh script_evo_4.sh 8 &
+./script_evo_4.sh gen_good_1 gen_err_1 > $SCRIPT_ERR 2>&1
+rc=$?
+
+result="NOK"
+if [ $rc -eq 3 ]; then result="OK"; fi
+echo "  return code: $rc => $result"
+
+result="NOK"
+if [ ! -z "`cat $SCRIPT_ERR | grep 'EXECUTE: gen_good_1'`" ]; then result="OK"; fi
+echo "  EXECUTE: gen_good_1 => $result"
+
+result="NOK"
+if [ ! -z "`cat $SCRIPT_ERR | grep '### ABORT ###'`" ]; then result="OK"; fi
+echo "  AbortProcess => $result "
+
+result="NOK"
+if [ ! -z "`cat $SCRIPT_ERR | grep '### EXIT ### DONE BYE'`" ]; then result="OK"; fi
+echo "  PostProcess => $result "
+
+result="NOK"
+if [ -f script_evo_4.log ]; then result="OK"; fi
+echo "  logfile exist => $result "
+
+echo ""
+```
+
+result is like:
+```
+#########################################################################
+### TEST 1: ./script_evo_4.sh
+  return code: 1 => OK
+  reason: At least one argument is needed => OK 
+  usage print => OK 
+  PostProcess => OK 
+```
+and
+```
+#########################################################################
+### TEST 12: ./script_evo_4.sh  gen_good_1 gen_err_1
+###          CTRL+C during process
+  return code: 3 => OK
+  EXECUTE: gen_good_1 => OK
+  AbortProcess => OK 
+  PostProcess => OK 
+  logfile exist => OK 
+```
+
+But you cannot test each functions of the script like this. 
+
+### Test inside functions of script
+
+#### source script problem
+
+A way to test this is to source script in test script, so every function of script are known by test script, and then call the function and check the result.
 
 To do that, the first command executed by test script shall be
 ```
-source script_evo_1.sh
+source script_evo_4.sh
 ```
-then you can now call any function from script_evo_1.sh
+This make all content of your script known by test script 
 
-Example in script_evo_1_test.sh:
+Example in script_evo_4_test.sh:
+```bash
+#########################################################################
+echo "#########################################################################"
+echo "### TEST 15: inside function gen_err_1"
+
+#From this point, all following test will know functions of script_evo_4.sh
+source script_evo_4.sh
+
+#Need to init global variable used in function to test and other function that can be used by this function execution
+ME=script_evo_4
+LOGFILE=script_evo_4.log
+
+#Call the function with input var, if needed
+gen_err_1
+rc=$?
+
+#Analyse the result code and global variable modified if needed
+result="NOK"
+if [ $rc -eq 1 ]; then result="OK"; fi
+echo "  return code: $rc => $result"
+
+#May be need to reinit some elements before next test
+
+echo ""
 ```
-source script_evo_1.sh
+Result is:
+```
+#########################################################################
+### TEST 15: inside function gen_err_1
+At least one argument is needed
+usage: script_evo_1.sh [OPTION] <arg1> [<arg2> ... [<argN>]]
 
-echo "###  => return code: $?"
-gen_err_1 
-echo "###  => return code: $?"
+[OPTION]
+    -h | --help:                Print this usage
+    -v | --version:             Print version
+    -l | --logfile <filename>:  Logfile to use
+
+### EXIT ### Cleaning Process before exit
+### EXIT ### DONE BYE
 ```
 
-This introduce a new problem. The main part of the script is composed of:
-- parse input argument and init some variable called main.
-- the script itself that do the job with those variables.
-How to test them?
-The answer is to split them in 2 functions
-- script_evo_1() that do the job. The advantage is that this function can be called from another script as function (after source) instead of calling the full script.
-- main() that contains the argument parsing part, init var and call function script_evo_1
+This is not what expected ! What happened?
 
-something like
+source your script launch the basic execution of it, so in our case, it's like launching ```./script_evo_4.sh```, and result is like Test1 of test script
+
+Another issue that can happen is the duplicated variable name... after sourcing your script, if you use same name in script to test and test script, you can modify it unless you don't want to !!! The main pb of shell is the global variable.
+
+#### source script solution
+
+see script_evo_5.sh and script_evo_5_test.sh
+
+To avoid previous problem, you need:
+- Avoid to duplicate variable name in test script and script to test.
+
+  e.g. Use TST_<something> for your test script
+
+- Put ALL part of your script under functions
+
+  e.g. create a main function and/or split if needed (in our case, a main that parse args and then call a script part)
+
+- Add the following lines  in script:
+```bash
+if [ "`echo $@ | grep '\-\-source'`" == "" ]; then # For usual execution
+    main "${@}"
+fi
+```
+
+- source the script in test script like:
+```bash
+source script_evo5.sh --source
+```
+
+Option **source** is my special keyword (Choose your own one: test, special, debug, ...) detected for test script to not execute the main function of your script
+
+
+
+
 
 
 
