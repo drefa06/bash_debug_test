@@ -4,8 +4,8 @@
 test_1()
 {
     echo "#########################################################################"
-    echo "### TEST 1: ./script_evo_5.sh"
-    ./script_evo_5.sh > $SCRIPT_ERR 2>&1
+    echo "### TEST 1: ./script_final.sh"
+    ./script_final.sh > $SCRIPT_ERR 2>&1
     rc=$?
 
     result="NOK"
@@ -30,8 +30,8 @@ test_1()
 test_2()
 {
     echo "#########################################################################"
-    echo "### TEST 2: ./script_evo_5.sh -h"
-    ./script_evo_5.sh -h > $SCRIPT_ERR 2>&1
+    echo "### TEST 2: ./script_final.sh -h"
+    ./script_final.sh -h > $SCRIPT_ERR 2>&1
     rc=$?
 
     result="NOK"
@@ -56,8 +56,8 @@ test_2()
 test_3()
 {
     echo "#########################################################################"
-    echo "### TEST 3: ./script_evo_5.sh --help"
-    ./script_evo_5.sh -h > $SCRIPT_ERR 2>&1
+    echo "### TEST 3: ./script_final.sh --help"
+    ./script_final.sh -h > $SCRIPT_ERR 2>&1
     rc=$?
 
     result="NOK"
@@ -82,8 +82,8 @@ test_3()
 test_4()
 {
     echo "#########################################################################"
-    echo "### TEST 4: ./script_evo_5.sh -x"
-    ./script_evo_5.sh -x > $SCRIPT_ERR 2>&1
+    echo "### TEST 4: ./script_final.sh -x"
+    ./script_final.sh -x > $SCRIPT_ERR 2>&1
     rc=$?
 
     result="NOK"
@@ -108,8 +108,8 @@ test_4()
 test_5()
 {
     echo "#########################################################################"
-    echo "### TEST 5: ./script_evo_5.sh --version"
-    ./script_evo_5.sh --version > $SCRIPT_ERR 2>&1
+    echo "### TEST 5: ./script_final.sh --version"
+    ./script_final.sh --version > $SCRIPT_ERR 2>&1
     rc=$?
 
     result="NOK"
@@ -130,8 +130,8 @@ test_5()
 test_6()
 {
     echo "#########################################################################"
-    echo "### TEST 6: ./script_evo_5.sh -l test.log"
-    ./script_evo_5.sh -l test.log > $SCRIPT_ERR 2>&1
+    echo "### TEST 6: ./script_final.sh -l test.log"
+    ./script_final.sh -l test.log > $SCRIPT_ERR 2>&1
     rc=$?
 
     result="NOK"
@@ -157,8 +157,8 @@ test_6()
 test_7()
 {
     echo "#########################################################################"
-    echo "### TEST 7: ./script_evo_5.sh -l test.log gen_err_1"
-    ./script_evo_5.sh -l test.log gen_err_1 > $SCRIPT_ERR 2>&1
+    echo "### TEST 7: ./script_final.sh -l test.log gen_err_1"
+    ./script_final.sh -l test.log gen_err_1 > $SCRIPT_ERR 2>&1
     rc=$?
 
     result="NOK"
@@ -188,8 +188,8 @@ test_7()
 test_8()
 {
     echo "#########################################################################"
-    echo "### TEST 8: ./script_evo_5.sh gen_err_2"
-    ./script_evo_5.sh gen_err_2 > $SCRIPT_ERR 2>&1
+    echo "### TEST 8: ./script_final.sh gen_err_2"
+    ./script_final.sh gen_err_2 > $SCRIPT_ERR 2>&1
     rc=$?
 
     result="NOK"
@@ -209,7 +209,7 @@ test_8()
     echo "  PostProcess => $result "
 
     result="NOK"
-    if [ -f script_evo_5.log ]; then result="OK"; fi
+    if [ -f script_final.log ]; then result="OK"; fi
     echo "  logfile exist => $result "
 
 
@@ -219,8 +219,8 @@ test_8()
 test_9()
 {
     echo "#########################################################################"
-    echo "### TEST 9: ./script_evo_5.sh gen_err_3 gen_err_4"
-    ./script_evo_5.sh gen_err_3 gen_err_4> $SCRIPT_ERR 2>&1
+    echo "### TEST 9: ./script_final.sh gen_err_3 gen_err_4"
+    ./script_final.sh gen_err_3 gen_err_4> $SCRIPT_ERR 2>&1
     rc=$?
 
     result="NOK"
@@ -243,7 +243,7 @@ test_9()
     echo "  PostProcess => $result "
 
     result="NOK"
-    if [ -f script_evo_5.log ]; then result="OK"; fi
+    if [ -f script_final.log ]; then result="OK"; fi
     echo "  logfile exist => $result "
 
 
@@ -253,8 +253,8 @@ test_9()
 test_10()
 {
     echo "#########################################################################"
-    echo "### TEST 10: ./script_evo_5.sh gen_good_1 gen_err_4 gen_err_1"
-    ./script_evo_5.sh gen_good_1 gen_err_4 gen_err_1> $SCRIPT_ERR 2>&1
+    echo "### TEST 10: ./script_final.sh gen_good_1 gen_err_4 gen_err_1"
+    ./script_final.sh gen_good_1 gen_err_4 gen_err_1> $SCRIPT_ERR 2>&1
     rc=$?
 
     result="NOK"
@@ -280,7 +280,7 @@ test_10()
     echo "  PostProcess => $result "
 
     result="NOK"
-    if [ -f script_evo_5.log ]; then result="OK"; fi
+    if [ -f script_final.log ]; then result="OK"; fi
     echo "  logfile exist => $result "
 
 
@@ -290,10 +290,10 @@ test_10()
 test_11()
 {
     echo "#########################################################################"
-    echo "### TEST 11: ./script_evo_5.sh  gen_good_1 gen_err_1"
+    echo "### TEST 11: ./script_final.sh  gen_good_1 gen_err_1"
     echo "###          CTRL+C during process"
-    ./generate_ctrl_c.sh script_evo_5.sh 3 &
-    ./script_evo_5.sh gen_good_1 gen_err_1 > $SCRIPT_ERR 2>&1
+    ./generate_ctrl_c.sh script_final.sh 3 &
+    ./script_final.sh gen_good_1 gen_err_1 > $SCRIPT_ERR 2>&1
     rc=$?
 
     result="NOK"
@@ -313,7 +313,7 @@ test_11()
     echo "  PostProcess => $result "
 
     result="NOK"
-    if [ -f script_evo_5.log ]; then result="OK"; fi
+    if [ -f script_final.log ]; then result="OK"; fi
     echo "  logfile exist => $result "
 
     echo ""
@@ -322,10 +322,10 @@ test_11()
 test_12()
 {
     echo "#########################################################################"
-    echo "### TEST 12: ./script_evo_5.sh  gen_good_1 gen_err_1"
+    echo "### TEST 12: ./script_final.sh  gen_good_1 gen_err_1"
     echo "###          CTRL+C during process"
-    ./generate_ctrl_c.sh script_evo_5.sh 8 &
-    ./script_evo_5.sh gen_good_1 gen_err_1 > $SCRIPT_ERR 2>&1
+    ./generate_ctrl_c.sh script_final.sh 8 &
+    ./script_final.sh gen_good_1 gen_err_1 > $SCRIPT_ERR 2>&1
     rc=$?
 
     result="NOK"
@@ -345,7 +345,7 @@ test_12()
     echo "  PostProcess => $result "
 
     result="NOK"
-    if [ -f script_evo_5.log ]; then result="OK"; fi
+    if [ -f script_final.log ]; then result="OK"; fi
     echo "  logfile exist => $result "
 
     echo ""
@@ -354,10 +354,10 @@ test_12()
 test_13()
 {
     echo "#########################################################################"
-    echo "### TEST 13: ./script_evo_5.sh  gen_good_1 gen_err_1"
+    echo "### TEST 13: ./script_final.sh  gen_good_1 gen_err_1"
     echo "###          CTRL+C during process"
-    ./generate_ctrl_c.sh script_evo_5.sh 12 &
-    ./script_evo_5.sh gen_good_1 gen_err_1 > $SCRIPT_ERR 2>&1
+    ./generate_ctrl_c.sh script_final.sh 12 &
+    ./script_final.sh gen_good_1 gen_err_1 > $SCRIPT_ERR 2>&1
     rc=$?
 
     result="NOK"
@@ -380,7 +380,7 @@ test_13()
     echo "  PostProcess => $result "
 
     result="NOK"
-    if [ -f script_evo_5.log ]; then result="OK"; fi
+    if [ -f script_final.log ]; then result="OK"; fi
     echo "  logfile exist => $result "
 
     echo ""
@@ -389,8 +389,8 @@ test_13()
 test_14()
 {
     echo "#########################################################################"
-    echo "### TEST 14: ./script_evo_5.sh acme"
-    ./script_evo_5.sh acme > $SCRIPT_ERR 2>&1
+    echo "### TEST 14: ./script_final.sh acme"
+    ./script_final.sh acme > $SCRIPT_ERR 2>&1
     rc=$?
 
     result="NOK"
@@ -410,15 +410,15 @@ test_14()
     echo "  PostProcess => $result "
 
     result="NOK"
-    if [ -f script_evo_5.log ]; then result="OK"; fi
+    if [ -f script_final.log ]; then result="OK"; fi
     echo "  logfile exist => $result "
 
     echo ""
 }
 
 #########################################################################
-#From this point, all following test will know functions of script_evo_5.sh
-source script_evo_5.sh --source
+#From this point, all following test will know functions of script_final.sh
+source script_final.sh --source
 
 #########################################################################
 test_15()
@@ -427,8 +427,8 @@ test_15()
     echo "### TEST 15: inside function gen_err_1"
 
     #Need to init global variable used in function to test and other function that can be used by this function execution
-    ME=script_evo_5
-    LOGFILE=script_evo_5.log
+    ME=script_final
+    LOGFILE=script_final.log
 
     #1st: Call the function like a subshell, check if no script error happen, with input var if needed
     TST_call gen_err_1
@@ -451,8 +451,8 @@ test_16()
     echo "### TEST 16: inside function gen_good_1"
 
     #Need to init global variable used in function to test and other function that can be used by this function execution
-    ME=script_evo_5
-    LOGFILE=script_evo_5.log
+    ME=script_final
+    LOGFILE=script_final.log
 
     #1st: Call the function like a subshell, check if no script error happen, with input var if needed
     TST_call gen_good_1
@@ -474,8 +474,8 @@ test_17()
     echo "### TEST 17: inside function gen_err_2"
 
     #Need to init global variable used in function to test and other function that can be used by this function execution
-    ME=script_evo_5
-    LOGFILE=script_evo_5.log
+    ME=script_final
+    LOGFILE=script_final.log
 
     #1st: Call the function like a subshell, check if no script error happen, with input var if needed
     TST_call gen_err_2
@@ -497,8 +497,8 @@ test_18()
     echo "### TEST 18: inside function gen_err_3"
 
     #Need to init global variable used in function to test and other function that can be used by this function execution
-    ME=script_evo_5
-    LOGFILE=script_evo_5.log
+    ME=script_final
+    LOGFILE=script_final.log
 
     #1st: Call the function like a subshell, check if no script error happen, with input var if needed
     TST_call gen_err_3
@@ -520,8 +520,8 @@ test_19()
     echo "### TEST 19: inside function gen_err_4"
 
     #Need to init global variable used in function to test and other function that can be used by this function execution
-    ME=script_evo_5
-    LOGFILE=script_evo_5.log
+    ME=script_final
+    LOGFILE=script_final.log
 
     #1st: Call the function like a subshell, check if no script error happen, with input var if needed
     TST_call gen_err_4
@@ -577,7 +577,7 @@ function TST_PostProcess()
 trap 'TST_PostProcess $?' EXIT #trap exit
 trap 'TST_AbortProcess $? ${BASH_SOURCE}:${LINENO} ${FUNCNAME[0]:+${FUNCNAME[0]}}' SIGINT SIGTERM SIGKILL
 
-SCRIPT_ERR="script_evo_5_test.err"
+SCRIPT_ERR="script_final_test.err"
 
 TST_ME=$(basename -- "$0")
 TST_LIST=`cat $TST_ME | grep '^test_[0-9]*()' | cut -d\( -f1`

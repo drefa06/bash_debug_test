@@ -111,6 +111,7 @@ echo_type()
 
     #debug treatment
     if [ "$DEBUG_EN" == "no" ] && [ "${echo_type}" == "DEBUG" ]; then
+        if [ "${xtraceStatus}" == "on" ]; then set -x; fi
         return
     fi
    
