@@ -58,7 +58,6 @@ parse_args()
     if [ -f ${LOGFILE} ]; then rm -f ${LOGFILE}; fi #remove new log file if exist
     #We can start to log now
 
-    echo_debug "DONE parse_args"
     echo_log "Analyse input argument"
     echo_log "   Logfile:        ${LOGFILE}"
     echo_log "   Debug Level:    ${DEBUG_LEVEL}"
@@ -93,6 +92,7 @@ gen_err_1()
 ###################################################################################
 gen_good_1()
 {
+
     echo_debug "gen_good_1: START"
 
     echo_log "gen_good_1: Do something before"
@@ -143,14 +143,13 @@ gen_err_3()
 {
     echo_debug "gen_err_3: START"
 
-    echo "gen_err_3: Do something before"
+    echo_log "gen_err_3: Do something before"
     sleep 3
 
-    echo "Generate an error"
+    echo_log "Generate an error"
     echo hello | grep $foo
 
-
-    echo "gen_err_3: Do something after"
+    echo_log "gen_err_3: Do something after"
     sleep 1
 
     echo_info "gen_err_3: No Error, continue script"
@@ -189,19 +188,30 @@ echo_duration()
 
 
 ###################################################################################
-call()
+call_func()
 {
-    func_name=$1
+    echo_debug "call_func: START"
+    echo_debug "call_func: input = $1"
+
+    local func_name=$1
+    local err_name=${func_name}.err
     shift
-    func_args="$@"
-    eval ${func_name} "${func_args}" 2> ${func_name}.err
+    local func_args="$@"
+
+    eval ${func_name} "${func_args}" 2> ${err_name}
     rc=$?
-    if [ -f ${func_name}.err -a "`cat ${func_name}.err`" != "" ]; then
-        echo_error "### ERROR ### `cat ${func_name}.err`"
-        rm -f ${func_name}.err
+
+    if [ -f ${func_name}.err -a "`cat ${err_name}`" != "" ]; then
+        #cat ${err_name}
+        echo_error "### ERROR ### in function ${func_name}"
+        echo_error "### ERROR ### `cat ${err_name}`"
+
+        rm -f ${err_name}
         exit 1
     fi
     
+    echo_debug "call_func: END"
+
     return $rc
 }
 
@@ -217,8 +227,13 @@ function AbortProcess()
 ###################################################################################
 function PostProcess()
 {
+    if [ -f $2.err ] && [ "`cat $2.err`" != "" ]; then
+        echo_error "### ERROR ### in function $2"
+        echo_error "### ERROR ### `cat $2.err`"
+        rm -f $2.err
+    fi 
+
     echo_info "### EXIT ### Cleaning Process before exit"
-    echo_info "### EXIT ### During: $2 $3"
     #Add here what you need to be sure after exiting the script
     rm -f ${ME%.*}.tmp ${ME%.*}.err
     echo_info "### EXIT ### DONE BYE"
@@ -235,7 +250,7 @@ script()
 
     start_time=$(date +%s%N)
 
-    echo ""
+    echo_log ""
     #Call and execute functions in ARGS_MANDATORY
     # =>1/ either by direct call of ${ARGS_MANDATORY[@]}
     #      for err_type in `echo ${ARGS_MANDATORY[@]}`; do
@@ -244,40 +259,34 @@ script()
         ARGS_MANDATORY=( ${ARGS_MANDATORY[@]/${err_type}/} )
         echo_info "EXECUTE: ${err_type}"
 
-        call ${err_type}
-
-        #if [ "${err_type}" == "gen_err_1" ]; then 
-        #    call ${err_type} #exit 1 if any error found 
-        #else
-        #    eval ${err_type} 2>> $ERRFILE #continue script until the end
-        #fi
+        call_func ${err_type}
 
         echo_warning "sleep 5 => if you want to test Ctrl+C ... just for fun, but let the script finish at least once"
         sleep 5
     
-        echo ""
+        echo_log ""
     done
     duration=$(($(date +%s%N)-${start_time}))
-    echo_duration $duration | tee -a ${TMP_FILE}
+    echo $duration >> ${TMP_FILE}
 
     echo "End Execution, SLEEP 5sec more before ending"
     sleep 5
 
     #print then remove tmp file before exit
     echo_log "Content of ${TMP_FILE}:"
-    cat ${TMP_FILE}  | tee -a ${LOGFILE}
-    echo_log "Remove ${TMP_FILE}"
+    echo_log `cat ${TMP_FILE}`
+    echo "Remove ${TMP_FILE}"
     rm -f ${TMP_FILE}
 
     #exit 2 for any error that do not stop script
     if [ `cat $ERRFILE | wc -l` -ne 0 ]; then
         echo_warning "Non Critical error found during execution:"
-        cat $ERRFILE | tee -a ${LOGFILE}
-        echo_debug "script: exit 2"
+        echo_warning `cat $ERRFILE`
+        #echo "script: exit 2"
 
         exit 2
     else
-        echo_log "WELL DONE, BYE"
+        echo_info "WELL DONE, BYE"
     fi
 
     echo_debug "script: END"
@@ -304,14 +313,23 @@ main()
     DEBUG_LEVEL=0         #default debug level    =>             -d|--debug <debug_level>
     DEBUG_EN="no"         #default debug log echo => is yes for DEBUG_LEVEL=1 or 2
 
+    declare -a ARGS_MANDATORY=( "" )  #init non-option argument
+
+    ##############################################################################
+    #Parse input argument
+    parse_args "$@"
+    ##############################################################################
+
     if [ $DEBUG_LEVEL -eq 0 ]; then
         #if debug level is 0 (-d0) xtrace=off
         set +x
+        set +v
         
     elif [ $DEBUG_LEVEL -eq 1 ]; then
         #if debug level is 1 (-d1) xtrace=off but debug log (echo_debug) is on
         DEBUG_EN="yes"
         set +x
+        set +v
 
     elif [ $DEBUG_LEVEL -ge 2 ]; then
         #if debug level is 2 (-d2) xtrace and debug log (echo_debug) are on
@@ -320,23 +338,15 @@ main()
         #exec 3>&2 2> $LOGFILE
         exec {BASH_XTRACEFD}>>"$LOGFILE"
         set -x
+        set -v
     fi
 
     #From this point, you can start to use echo_debug and see the result in logfile
     echo_debug "start your process"
 
-    declare -a ARGS_MANDATORY=( "" )  #init non-option argument
-
-    ##############################################################################
-    #Parse input argument
-    parse_args "$@"
-    ##############################################################################
-
-    echo_debug "parse_args Done"
-
     #Put some element in tmp file
-    echo_log "LOGFILE=${LOGFILE}" | tee -a ${TMP_FILE}
-    echo_log "MANDATORY=${ARGS_MANDATORY[@]}" | tee -a ${TMP_FILE}
+    echo "LOGFILE=${LOGFILE}" >> ${TMP_FILE}
+    echo "MANDATORY=${ARGS_MANDATORY[@]}" >> ${TMP_FILE}
     duration=$(($(date +%s%N)-${start_time}))
     echo_duration $duration
 
@@ -355,7 +365,7 @@ source lib/utils.sh    #include utils tools
 if [ "`echo $@ | grep '\-\-source'`" == "" ]; then # For usual execution
     set -e
 
-    trap 'PostProcess $? ${BASH_SOURCE}:${LINENO} ${FUNCNAME[0]:+${FUNCNAME[0]}}' EXIT #trap exit
+    trap 'PostProcess $? ${FUNCNAME[0]:+${FUNCNAME[0]}}' EXIT #trap exit
     trap 'AbortProcess $? ${BASH_SOURCE}:${LINENO} ${FUNCNAME[0]:+${FUNCNAME[0]}}' SIGINT SIGTERM SIGKILL
 
     main "${@}"

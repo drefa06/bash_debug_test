@@ -14,8 +14,10 @@ Most of case you need to create a bash script that execute some operations. In t
 
 For this basic case, the sript is short so the best solution is to print out the lines during execution with xTrace.
 2 solutions:
- - Add set -x / set +x in the script, around the part to debug. it print only the lines uncapsulated by set -x/+x.
+ - Add set -x / set +x in the script, around the part to debug. it print each command executed and only one uncapsulated by set -x/+x.
  - launch the script with bash -x <script_name>. It print all the lines executed of the script.
+ - Add set -v / set +v in the script to print command before execution.
+ - or launch the script with bash -v <script>.
 
 script_basic.sh
 ```bash

@@ -87,7 +87,7 @@ echo_type()
 {
     #trace pre-treatment, we do not want to print echo_type traces
     local xtraceStatus=`set -o | grep xtrace | awk '{ print $2 }'`
-    if [ "${xtraceStatus}" == "on" ]; then set +x; fi
+    if [ "${xtraceStatus}" == "on" ]; then set +x; set +v; fi
 
     local logdate=`date +"[%Y/%m/%d - %H:%m:%S]"`    
     local option=""
@@ -111,11 +111,12 @@ echo_type()
 
     #debug treatment
     if [ "$DEBUG_EN" == "no" ] && [ "${echo_type}" == "DEBUG" ]; then
-        if [ "${xtraceStatus}" == "on" ]; then set -x; fi
+        if [ "${xtraceStatus}" == "on" ]; then set -x; set -v; fi
         return
     fi
    
     #color definition
+    local color=""
     local bold=$(tput bold)     #bold
 
     local col_info=$(tput setaf 6)     #Cyan
@@ -140,7 +141,7 @@ echo_type()
 
     echo -e ${option} "${color}${text}${col_rst}" | tee -a ${LOGFILE}
 
-    if [ "${xtraceStatus}" == "on" ]; then set -x; fi
+    if [ "${xtraceStatus}" == "on" ]; then set -x; set -v; fi
 
 }
 
