@@ -5,7 +5,9 @@
 ###################################################################################
 usage()
 {
-    echo "usage: script_evo_1.sh [OPTION] <arg1> [<arg2> ... [<argN>]]"
+    local status=$1
+
+    echo "usage: $ME [OPTION] <arg1> [<arg2> ... [<argN>]]"
     echo ""
     echo "[OPTION]"
     echo "    -h | --help:                Print this usage"
@@ -16,6 +18,8 @@ usage()
     echo "                                1 = echo_debug traces only"
     echo "                                2 = echo_debug + set -x traces"
     echo ""
+
+    exit $status
 }
 
 ###################################################################################
@@ -30,7 +34,7 @@ parse_args()
     while true ; do
         case "$1" in
             -h|--help)
-                usage; exit 0;  shift;;
+                usage 0;  shift;;
             -v|--version)
                 echo "version: $VERSION"; exit 0; shift;;
             -l|--logfile)
@@ -49,8 +53,7 @@ parse_args()
     #For at least 1 element in ARG_MANDATORY
     if [ ${#@} -lt 1 ]; then
         echo_error "At least one argument is needed"
-        usage;
-        exit 1
+        usage 1
     fi
 
     ARGS_MANDATORY=( "$@" "${ARGS_MANDATORY[@]}" )
@@ -174,6 +177,22 @@ gen_err_4()
     echo_debug "gen_err_4: END"
 }
 
+###################################################################################
+gen_err_5()
+{
+    echo_debug "gen_err_5: START"
+
+    echo_log "gen_err_5: Do something before"
+    sleep 2
+
+    ls -1 | mail | cat | cut -f1
+
+    echo_log "gen_err_5: Do something after"
+    sleep 2
+
+    echo_info "gen_err_5: No Error, continue script"
+    echo_debug "gen_err_5: END"
+}
 
 ###################################################################################
 echo_duration()
@@ -296,9 +315,9 @@ script()
 ###################################################################################
 main()
 {
-    VERSION="0.1"
+    readonly VERSION="0.1"
 
-    ME=$(basename -- "$0")
+    readonly ME=$(basename -- "$0")
 
     TMP_FILE="${ME%.*}.tmp"
     start_time=$(date +%s%N)
@@ -323,13 +342,11 @@ main()
     if [ $DEBUG_LEVEL -eq 0 ]; then
         #if debug level is 0 (-d0) xtrace=off
         set +x
-        set +v
         
     elif [ $DEBUG_LEVEL -eq 1 ]; then
         #if debug level is 1 (-d1) xtrace=off but debug log (echo_debug) is on
         DEBUG_EN="yes"
         set +x
-        set +v
 
     elif [ $DEBUG_LEVEL -ge 2 ]; then
         #if debug level is 2 (-d2) xtrace and debug log (echo_debug) are on
@@ -338,7 +355,6 @@ main()
         #exec 3>&2 2> $LOGFILE
         exec {BASH_XTRACEFD}>>"$LOGFILE"
         set -x
-        set -v
     fi
 
     #From this point, you can start to use echo_debug and see the result in logfile
@@ -360,10 +376,13 @@ main()
 ### 
 ###################################################################################
 #create a tmp file.
-source lib/utils.sh    #include utils tools
+source $(dirname $0)/lib/utils.sh    #include utils tools
 
 if [ "`echo $@ | grep '\-\-source'`" == "" ]; then # For usual execution
-    set -e
+    set -o pipefail  # trace ERR through pipes
+    set -o errtrace  # trace ERR through 'time command' and other functions
+    set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable
+    set -o errexit   ## set -e : exit the script if any statement returns a non-true return value
 
     trap 'PostProcess $? ${FUNCNAME[0]:+${FUNCNAME[0]}}' EXIT #trap exit
     trap 'AbortProcess $? ${BASH_SOURCE}:${LINENO} ${FUNCNAME[0]:+${FUNCNAME[0]}}' SIGINT SIGTERM SIGKILL

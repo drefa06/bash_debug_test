@@ -449,7 +449,57 @@ test_10()
 test_11()
 {
     echo_info "#########################################################################"
-    echo_info "### TEST 11: ./script_final.sh  gen_good_1 gen_err_1"
+    echo_info "### TEST 11: ./script_final.sh gen_good_1 gen_err_5"
+    ./script_final.sh gen_good_1 gen_err_5> $TST_ERRFILE 2>&1
+    rc=$?
+
+    test_result="OK"
+
+    result="NOK"
+    if [ $rc -eq 1 ]; then result="OK"; fi
+    echo "  return code: $rc => $result"
+
+    result="NOK"
+    if [ ! -z "`cat $TST_ERRFILE | grep 'EXECUTE: gen_good_1'`" ]; then result="OK"
+    else test_result="NOK"
+    fi
+    echo "  EXECUTE: gen_good_1 => $result"
+    result="NOK"
+    if [ ! -z "`cat $TST_ERRFILE | grep 'EXECUTE: gen_err_5'`" ]; then result="OK"
+    else test_result="NOK"
+    fi
+
+    result="NOK"
+    if [ -z "`cat $TST_ERRFILE | grep '### ERROR ###'`" ]; then result="OK"
+    else test_result="NOK"
+    fi
+    echo "  Error found => $result "
+
+    result="NOK"
+    if [ ! -z "`cat $TST_ERRFILE | grep '### EXIT ### DONE BYE'`" ]; then result="OK"
+    else test_result="NOK"
+    fi
+    echo "  PostProcess => $result "
+
+    result="NOK"
+    if [ -f script_final.log ]; then result="OK"
+    else test_result="NOK"
+    fi
+    echo "  logfile exist => $result "
+
+
+    if [ "$test_result" == "OK" ]; then echo_info "TEST => [OK]"
+    else echo_error "TEST => [NOK]"
+    fi
+
+    echo_log ""
+
+}
+#########################################################################
+test_12()
+{
+    echo_info "#########################################################################"
+    echo_info "### TEST 12: ./script_final.sh  gen_good_1 gen_err_1"
     echo_info "###          CTRL+C during process"
     ./generate_ctrl_c.sh script_final.sh 3 &
     ./script_final.sh gen_good_1 gen_err_1 > $TST_ERRFILE 2>&1
@@ -495,10 +545,10 @@ test_11()
 
 }
 #########################################################################
-test_12()
+test_13()
 {
     echo_info "#########################################################################"
-    echo_info "### TEST 12: ./script_final.sh  gen_good_1 gen_err_1"
+    echo_info "### TEST 13: ./script_final.sh  gen_good_1 gen_err_1"
     echo_info "###          CTRL+C during process"
     ./generate_ctrl_c.sh script_final.sh 8 &
     ./script_final.sh gen_good_1 gen_err_1 > $TST_ERRFILE 2>&1
@@ -544,10 +594,10 @@ test_12()
 
 }
 #########################################################################
-test_13()
+test_14()
 {
     echo_info "#########################################################################"
-    echo_info "### TEST 13: ./script_final.sh  gen_good_1 gen_err_1"
+    echo_info "### TEST 14: ./script_final.sh  gen_good_1 gen_err_1"
     echo_info "###          CTRL+C during process"
     ./generate_ctrl_c.sh script_final.sh 12 &
     ./script_final.sh gen_good_1 gen_err_1 > $TST_ERRFILE 2>&1
@@ -598,10 +648,10 @@ test_13()
 
 }
 #########################################################################
-test_14()
+test_15()
 {
     echo_info "#########################################################################"
-    echo_info "### TEST 14: ./script_final.sh acme"
+    echo_info "### TEST 15: ./script_final.sh acme"
     ./script_final.sh acme > $TST_ERRFILE 2>&1
     rc=$?
 
@@ -650,10 +700,10 @@ test_14()
 source script_final.sh --source
 
 #########################################################################
-test_15()
+test_16()
 {
     echo_info "#########################################################################"
-    echo_info "### TEST 15: inside function gen_err_1"
+    echo_info "### TEST 16: inside function gen_err_1"
 
     test_result="OK"
 
@@ -683,10 +733,10 @@ test_15()
 }
 
 #########################################################################
-test_16()
+test_17()
 {
     echo_info "#########################################################################"
-    echo_info "### TEST 16: inside function gen_good_1"
+    echo_info "### TEST 17: inside function gen_good_1"
 
     test_result="OK"
 
@@ -715,10 +765,10 @@ test_16()
 
 }
 #########################################################################
-test_17()
+test_18()
 {
     echo_info "#########################################################################"
-    echo_info "### TEST 17: inside function gen_err_2"
+    echo_info "### TEST 18: inside function gen_err_2"
 
     test_result="OK"
 
@@ -739,7 +789,7 @@ test_17()
 
     #May be need to reinit some elements before next test
 
-    if [ "$test_result"=="OK" ]; then echo_info "TEST => [OK]"
+    if [ "$test_result" == "OK" ]; then echo_info "TEST => [OK]"
     else echo_error "TEST => [NOK]"
     fi
 
@@ -747,10 +797,10 @@ test_17()
 
 }
 #########################################################################
-test_18()
+test_19()
 {
     echo_info "#########################################################################"
-    echo_info "### TEST 18: inside function gen_err_3"
+    echo_info "### TEST 19: inside function gen_err_3"
 
     test_result="OK"
 
@@ -779,10 +829,10 @@ test_18()
 
 }
 #########################################################################
-test_19()
+test_20()
 {
     echo_info "#########################################################################"
-    echo_info "### TEST 19: inside function gen_err_4"
+    echo_info "### TEST 20: inside function gen_err_4"
 
     test_result="OK"
 
@@ -792,6 +842,38 @@ test_19()
 
     #1st: Call the function like a subshell, check if no script error happen, with input var if needed
     TST_call gen_err_4
+    rc=$?
+
+    #Analyse the result code and global variable modified if needed
+    result="NOK"
+    if [ $rc -eq 0 ]; then result="OK"
+    else test_result="NOK"
+    fi
+    echo "  return code: $rc => $result"
+
+    #May be need to reinit some elements before next test
+
+    if [ "$test_result" == "OK" ]; then echo_info "TEST => [OK]"
+    else echo_error "TEST => [NOK]"
+    fi
+
+    echo_log ""
+
+}
+#########################################################################
+test_21()
+{
+    echo_info "#########################################################################"
+    echo_info "### TEST 20: inside function gen_err_5"
+
+    test_result="OK"
+
+    #Need to init global variable used in function to test and other function that can be used by this function execution
+    ME=script_final
+    LOGFILE=script_final.log
+
+    #1st: Call the function like a subshell, check if no script error happen, with input var if needed
+    TST_call gen_err_5
     rc=$?
 
     #Analyse the result code and global variable modified if needed
